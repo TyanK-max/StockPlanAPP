@@ -1,10 +1,13 @@
-import { API, HEADERS, SH_PREFIX, SZ_PREFIX } from '../utils/constants';
+import { API, HEADERS } from '../utils/constants';
+
+function getMarket(code) {
+  if (code.startsWith('6') || code.startsWith('5') || code.startsWith('9')) return 'sh';
+  return 'sz';
+}
 
 function getSecid(code) {
-  if (code.startsWith('6') || code.startsWith('5') || code.startsWith('9')) {
-    return SH_PREFIX + '.' + code;
-  }
-  return SZ_PREFIX + '.' + code;
+  const prefix = getMarket(code) === 'sh' ? '1' : '0';
+  return prefix + '.' + code;
 }
 
 async function fetchJson(url) {
@@ -69,26 +72,45 @@ export async function fetchSingleQuote(code) {
   }
 }
 
-export async function fetchKline(code, days = 30) {
+export async function fetchTrends(code) {
   try {
     const secid = getSecid(code);
-    const end = new Date();
-    const beg = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
-    const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');
-    const url = `${API.KLINE}?secid=${secid}&klt=101&fqt=1&beg=${fmt(beg)}&end=${fmt(end)}&fields=f2,f3,f4,f5,f6`;
-    const data = await fetchJson(url);
-    if (!data || !data.data || !data.data.klines) return [];
-    return data.data.klines.map((line) => {
-      const parts = line.split(',');
-      return {
-        date: parts[0],
-        open: Number(parts[1]),
-        close: Number(parts[2]),
-        high: Number(parts[3]),
-        low: Number(parts[4]),
-        volume: Number(parts[5]),
-      };
-    });
+    const url = `${API.TRENDS}?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52`;
+    const resp = await fetch(url, { headers: HEADERS });
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (!data || !data.data || !data.data.trends) return [];
+    return data.data.trends.map((item) => {
+      const parts = item.split(',');
+      const price = Number(parts[1]);
+      if (parts.length < 2 || isNaN(price)) return null;
+      return { time: parts[0], price };
+    }).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchKline(code, days = 60) {
+  try {
+    const market = getMarket(code);
+    const url = `${API.KLINE}?param=${market}${code},day,,,${days},qfq`;
+    const resp = await fetch(url);
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    if (!data || data.code !== 0 || !data.data) return [];
+    const raw = data.data[`${market}${code}`];
+    if (!raw) return [];
+    const list = raw.qfqday || raw.day || [];
+    return list.map((item) => ({
+      date: item[0],
+      open: Number(item[1]),
+      close: Number(item[2]),
+      high: Number(item[3]),
+      low: Number(item[4]),
+      volume: (Number(item[5]) || 0) * 100, // 腾讯单位是手，转为股
+      amount: item[6] ? Number(item[6]) : null, // 成交额（部分数据源有）
+    }));
   } catch {
     return [];
   }

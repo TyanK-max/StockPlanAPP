@@ -1,7 +1,8 @@
 export const API = {
   BATCH_QUOTE: 'https://push2.eastmoney.com/api/qt/ulist.np/get',
   SINGLE_QUOTE: 'https://push2.eastmoney.com/api/qt/stock/get',
-  KLINE: 'https://push2his.eastmoney.com/api/qt/stock/kline/get',
+  KLINE: 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get',
+  TRENDS: 'https://push2.eastmoney.com/api/qt/stock/trends2/get',
 };
 
 export const HEADERS = {
@@ -17,5 +18,3 @@ export const STORAGE_KEYS = {
   PLANS: '@plans',
 };
 
-export const SH_PREFIX = '1';
-export const SZ_PREFIX = '0';

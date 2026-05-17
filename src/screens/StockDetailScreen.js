@@ -16,25 +16,32 @@ export default function StockDetailScreen({ route }) {
   const { getPlansForStock, addPlan } = usePlans();
   const [quote, setQuote] = useState(quotes[code] || null);
   const [klineData, setKlineData] = useState([]);
+  const [chartActive, setChartActive] = useState(false);
 
   const stockPlans = getPlansForStock(code);
 
   useEffect(() => {
-    let interval;
+    let active = true;
+    let timer;
     const fetchData = async () => {
       const data = await fetchSingleQuote(code);
-      if (data) setQuote(data);
+      if (active && data) setQuote(data);
+      if (active) timer = setTimeout(fetchData, POLL_INTERVAL);
     };
     fetchData();
-    interval = setInterval(fetchData, POLL_INTERVAL);
-    return () => clearInterval(interval);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [code]);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const klines = await fetchKline(code, 60);
-      setKlineData(klines);
+      if (!cancelled) setKlineData(klines);
     })();
+    return () => { cancelled = true; };
   }, [code]);
 
   const handleSavePlan = (text) => {
@@ -52,10 +59,16 @@ export default function StockDetailScreen({ route }) {
   return (
     <View style={styles.container}>
       <FlatList
+        scrollEnabled={!chartActive}
         ListHeaderComponent={
           <>
             <QuoteHeader quote={displayQuote} />
-            <KLineChart data={klineData} days={60} />
+            <KLineChart
+              data={klineData}
+              days={60}
+              onChartTouchStart={() => setChartActive(true)}
+              onChartTouchEnd={() => setChartActive(false)}
+            />
             <PlanEditor onSave={handleSavePlan} />
             {stockPlans.length > 0 && (
               <View style={styles.sectionHeader}>
