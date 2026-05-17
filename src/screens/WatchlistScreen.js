@@ -2,12 +2,14 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import { useWatchlist } from '../hooks/useWatchlist';
 import { useQuotes } from '../hooks/useQuotes';
+import { usePlans } from '../hooks/usePlans';
 import StockCard from '../components/StockCard';
 import EmptyState from '../components/EmptyState';
 
 export default function WatchlistScreen({ navigation }) {
   const { watchlist, addStock, removeStock } = useWatchlist();
   const { quotes, refresh } = useQuotes();
+  const { getPlansForStock } = usePlans();
   const [modalVisible, setModalVisible] = useState(false);
   const [inputCode, setInputCode] = useState('');
 
@@ -38,15 +40,20 @@ export default function WatchlistScreen({ navigation }) {
   );
 
   const renderItem = useCallback(
-    ({ item }) => (
-      <StockCard
-        code={item}
-        quote={quotes[item]}
-        onPress={() => navigation.navigate('StockDetail', { code: item })}
-        onLongPress={() => handleRemove(item)}
-      />
-    ),
-    [quotes, navigation, handleRemove]
+    ({ item }) => {
+      const stockPlans = getPlansForStock(item);
+      const latestPlan = stockPlans.length > 0 ? stockPlans[0] : null;
+      return (
+        <StockCard
+          code={item}
+          quote={quotes[item]}
+          latestPlan={latestPlan}
+          onPress={() => navigation.navigate('StockDetail', { code: item })}
+          onLongPress={() => handleRemove(item)}
+        />
+      );
+    },
+    [quotes, navigation, handleRemove, getPlansForStock]
   );
 
   return (

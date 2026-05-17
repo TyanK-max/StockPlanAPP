@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { formatPrice, formatPercent, isUp, isDown } from '../utils/formatters';
 
-export default function StockCard({ code, quote, onPress, onLongPress }) {
+export default function StockCard({ code, quote, latestPlan, onPress, onLongPress }) {
   const name = quote ? quote.name : code;
   const price = quote ? formatPrice(quote.price) : '--';
   const changePercent = quote ? formatPercent(quote.changePercent) : '--';
@@ -11,26 +11,31 @@ export default function StockCard({ code, quote, onPress, onLongPress }) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} onLongPress={onLongPress} activeOpacity={0.7}>
-      <View style={styles.left}>
-        <Text style={styles.code}>{code}</Text>
-        <Text style={styles.name} numberOfLines={1}>{name}</Text>
-      </View>
-      <View style={styles.right}>
-        <Text style={[styles.price, { color }]}>{price}</Text>
-        <View style={[styles.badge, { backgroundColor: color }]}>
-          <Text style={styles.badgeText}>{changePercent}</Text>
+      <View style={styles.row}>
+        <View style={styles.left}>
+          <Text style={styles.code}>{code}</Text>
+          <Text style={styles.name} numberOfLines={1}>{name}</Text>
         </View>
-        <Text style={[styles.change, { color }]}>{change}</Text>
+        <View style={styles.right}>
+          <Text style={[styles.price, { color }]}>{price}</Text>
+          <View style={[styles.badge, { backgroundColor: color }]}>
+            <Text style={styles.badgeText}>{changePercent}</Text>
+          </View>
+          <Text style={[styles.change, { color }]}>{change}</Text>
+        </View>
       </View>
+      {latestPlan && (
+        <View style={styles.planPreview}>
+          <Text style={styles.planIcon}>📋</Text>
+          <Text style={styles.planText} numberOfLines={1}>{latestPlan.text}</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     backgroundColor: '#fff',
     marginHorizontal: 12,
     marginVertical: 4,
@@ -41,6 +46,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   left: {
     flex: 1,
@@ -77,5 +87,29 @@ const styles = StyleSheet.create({
   change: {
     fontSize: 12,
     marginTop: 2,
+  },
+  planPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#fff3e0',
+    backgroundColor: '#fff8e1',
+    marginHorizontal: -8,
+    marginBottom: -6,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    borderRadius: 8,
+  },
+  planIcon: {
+    fontSize: 12,
+    marginRight: 6,
+  },
+  planText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#e65100',
+    fontWeight: '600',
   },
 });

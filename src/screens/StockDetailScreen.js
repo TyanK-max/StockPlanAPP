@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert } from 'react-native';
-import { fetchSingleQuote } from '../api/eastmoney';
+import { fetchSingleQuote, fetchKline } from '../api/eastmoney';
 import { usePlans } from '../hooks/usePlans';
 import { useApp } from '../context/AppContext';
 import QuoteHeader from '../components/QuoteHeader';
 import PlanEditor from '../components/PlanEditor';
+import KLineChart from '../components/KLineChart';
 import EmptyState from '../components/EmptyState';
 import { formatDate } from '../utils/formatters';
 import { POLL_INTERVAL } from '../utils/constants';
@@ -14,6 +15,7 @@ export default function StockDetailScreen({ route }) {
   const { quotes } = useApp();
   const { getPlansForStock, addPlan } = usePlans();
   const [quote, setQuote] = useState(quotes[code] || null);
+  const [klineData, setKlineData] = useState([]);
 
   const stockPlans = getPlansForStock(code);
 
@@ -26,6 +28,13 @@ export default function StockDetailScreen({ route }) {
     fetchData();
     interval = setInterval(fetchData, POLL_INTERVAL);
     return () => clearInterval(interval);
+  }, [code]);
+
+  useEffect(() => {
+    (async () => {
+      const klines = await fetchKline(code, 60);
+      setKlineData(klines);
+    })();
   }, [code]);
 
   const handleSavePlan = (text) => {
@@ -46,6 +55,7 @@ export default function StockDetailScreen({ route }) {
         ListHeaderComponent={
           <>
             <QuoteHeader quote={displayQuote} />
+            <KLineChart data={klineData} days={60} />
             <PlanEditor onSave={handleSavePlan} />
             {stockPlans.length > 0 && (
               <View style={styles.sectionHeader}>
