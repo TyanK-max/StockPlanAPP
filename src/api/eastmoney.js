@@ -7,11 +7,6 @@ function getSecid(code) {
   return SZ_PREFIX + '.' + code;
 }
 
-function getMarketCode(code) {
-  if (code.startsWith('6')) return '1';
-  return '0';
-}
-
 async function fetchJson(url) {
   const resp = await fetch(url, { headers: HEADERS });
   if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -21,7 +16,7 @@ async function fetchJson(url) {
 export async function fetchBatchQuotes(codes) {
   try {
     const secids = codes.map((c) => getSecid(c)).join(',');
-    const url = `${API.BATCH_QUOTE}?pn=1&pz=100&po=0&np=1&fltt=2&invt=2&fid=f3&fs=${codes.map(c => 's:' + c).join(',')}&fields=f2,f3,f4,f5,f6,f12,f14,f15,f16,f17,f18,f20,f21`;
+    const url = `${API.BATCH_QUOTE}?fltt=2&invt=2&fields=f2,f3,f4,f5,f6,f12,f14,f15,f16,f17,f18&secids=${secids}`;
     const data = await fetchJson(url);
     if (!data || !data.data || !data.data.diff) return {};
     const map = {};

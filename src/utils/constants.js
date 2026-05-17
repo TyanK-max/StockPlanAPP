@@ -1,5 +1,5 @@
 export const API = {
-  BATCH_QUOTE: 'https://82.push2.eastmoney.com/api/qt/clist/get',
+  BATCH_QUOTE: 'https://push2.eastmoney.com/api/qt/ulist.np/get',
   SINGLE_QUOTE: 'https://push2.eastmoney.com/api/qt/stock/get',
   KLINE: 'https://push2his.eastmoney.com/api/qt/stock/kline/get',
 };
